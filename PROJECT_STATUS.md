@@ -1,5 +1,12 @@
 # Project Status
 
+## 2026-07-01 Calendly Link Behavior Fix
+
+- Confirmed no `xdg-open` or `window.open` references are present in the project.
+- Normalized homepage Calendly CTA text to "Book Free Audit Call" in the hero, audit form success message, and audit form fallback message.
+- Confirmed Calendly links remain standard anchors using `target="_blank"` and `rel="noreferrer"`.
+- Build verification: `npm run build` completed successfully.
+
 ## 2026-07-01 Calendly Audit Call CTA
 
 - Added the Calendly booking link `https://calendly.com/mainstreetmediatn/30min` as a secondary conversion path across the Main Street Media Co. website.

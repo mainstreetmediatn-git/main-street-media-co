@@ -231,7 +231,7 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                     </p>
                     <div className="msm-actions">
                         <a className="msm-button msm-button-primary" href="#audit-form">Request Free Visibility Audit</a>
-                        <a className="msm-button msm-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book a Free Audit Call</a>
+                        <a className="msm-button msm-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
                     </div>
                     <div className="msm-stat-strip" aria-label="Core outcomes">
                         <span>Local SEO</span>
@@ -394,7 +394,7 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                             <strong>Audit request sent.</strong>
                             <p>
                                 Your audit request has been sent. Main Street Media Co. will review it and follow up soon. You can also{" "}
-                                <a href={calendlyHref} target="_blank" rel="noreferrer">book your free audit call here</a>.
+                                <a href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>.
                             </p>
                         </div>
                     )}
@@ -403,7 +403,7 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                             <strong>Audit request prepared.</strong>
                             <p>
                                 Your audit request has been prepared. Until automated delivery is connected, please email mainstreetmediatn@gmail.com or call 949-447-4490. Or book directly here:{" "}
-                                <a href={calendlyHref} target="_blank" rel="noreferrer">{calendlyHref}</a>
+                                <a href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
                             </p>
                         </div>
                     )}
