@@ -119,3 +119,9 @@
 - Updated contact validation so the visitor must provide either email or phone before the fallback success state appears.
 - Added visible fallback contact info: `mainstreetmediatn@gmail.com` and `949-447-4490`.
 - Updated the success message to explain that automated delivery is not connected and directs visitors to email or call.
+
+## 2026-07-01 Git Tracking Cleanup
+
+- Confirmed project scope remains limited to `/home/kalikali/main-street-media-co`.
+- Confirmed `.gitignore` excludes installed dependencies, build output, Vercel output, env files, TypeScript build info, local files, and `.DS_Store`.
+- Removed generated dependency/build artifacts from Git tracking while preserving source and configuration files.
