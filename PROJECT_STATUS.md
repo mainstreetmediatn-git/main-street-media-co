@@ -1,5 +1,15 @@
 # Project Status
 
+## 2026-07-01 Free Visibility Audit Email Delivery
+
+- Installed `resend` in this project for server-side email delivery.
+- Added `api/audit-request.ts` as a Vercel serverless API function.
+- The audit API accepts `POST` only, validates required fields, requires either email or phone, uses a honeypot spam field, and reads only `RESEND_API_KEY`, `AUDIT_TO_EMAIL`, and `AUDIT_FROM_EMAIL` from environment variables.
+- Updated the Free Visibility Audit form to post JSON to `/api/audit-request`.
+- Added successful delivery messaging while preserving the visible manual fallback contact info and fallback failure message.
+- No API keys or `.env` files were added.
+- Build verification: `npm run build` completed successfully.
+
 ## 2026-06-30
 
 - Created a local Vite React project wrapper for the Main Street Media Co. homepage.

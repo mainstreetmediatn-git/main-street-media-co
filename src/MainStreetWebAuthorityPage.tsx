@@ -4,12 +4,13 @@ import { webAuthorityArticles } from "./data/webAuthorityArticles"
 
 type AuditFormState = {
     name: string
-    business: string
+    businessName: string
     phone: string
     email: string
     website: string
     industry: string
-    problem: string
+    biggestProblem: string
+    companyWebsite: string
 }
 
 type Card = {
@@ -19,13 +20,16 @@ type Card = {
 
 const initialForm: AuditFormState = {
     name: "",
-    business: "",
+    businessName: "",
     phone: "",
     email: "",
     website: "",
     industry: "",
-    problem: "",
+    biggestProblem: "",
+    companyWebsite: "",
 }
+
+type SubmissionStatus = "idle" | "submitting" | "sent" | "fallback"
 
 const services: Card[] = [
     {
@@ -139,7 +143,7 @@ const fixFirst = [
  */
 export default function MainStreetWebAuthorityPage(props: { style?: React.CSSProperties }) {
     const [form, setForm] = useState<AuditFormState>(initialForm)
-    const [submitted, setSubmitted] = useState(false)
+    const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus>("idle")
     const [contactError, setContactError] = useState("")
 
     React.useEffect(() => {
@@ -169,17 +173,31 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
         }
     }
 
-    function submitAuditRequest(event: React.FormEvent<HTMLFormElement>) {
+    async function submitAuditRequest(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
 
         if (!form.phone.trim() && !form.email.trim()) {
             setContactError("Please enter either an email address or phone number so we can follow up.")
-            setSubmitted(false)
+            setSubmissionStatus("idle")
             return
         }
 
         setContactError("")
-        setSubmitted(true)
+        setSubmissionStatus("submitting")
+
+        try {
+            const response = await fetch("/api/audit-request", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(form),
+            })
+
+            setSubmissionStatus(response.ok ? "sent" : "fallback")
+        } catch {
+            setSubmissionStatus("fallback")
+        }
     }
 
     return (
@@ -369,7 +387,13 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                 </div>
 
                 <form className="msm-form" onSubmit={submitAuditRequest}>
-                    {submitted && (
+                    {submissionStatus === "sent" && (
+                        <div className="msm-form-success msm-full" role="status" aria-live="polite">
+                            <strong>Audit request sent.</strong>
+                            <p>Your audit request has been sent. Main Street Media Co. will review it and follow up soon.</p>
+                        </div>
+                    )}
+                    {submissionStatus === "fallback" && (
                         <div className="msm-form-success msm-full" role="status" aria-live="polite">
                             <strong>Audit request prepared.</strong>
                             <p>Your audit request has been prepared. Until automated delivery is connected, please email mainstreetmediatn@gmail.com or call 949-447-4490.</p>
@@ -379,13 +403,17 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                         <strong>Manual delivery fallback:</strong>
                         <span>Email <a href="mailto:mainstreetmediatn@gmail.com">mainstreetmediatn@gmail.com</a> or call <a href="tel:+19494474490">949-447-4490</a>.</span>
                     </div>
+                    <label className="msm-honeypot" aria-hidden="true">
+                        Company Website
+                        <input tabIndex={-1} autoComplete="off" value={form.companyWebsite} onChange={(e) => updateField("companyWebsite", e.target.value)} />
+                    </label>
                     <label>
                         Name
                         <input required value={form.name} onChange={(e) => updateField("name", e.target.value)} placeholder="Your name" />
                     </label>
                     <label>
                         Business Name
-                        <input required value={form.business} onChange={(e) => updateField("business", e.target.value)} placeholder="Company name" />
+                        <input required value={form.businessName} onChange={(e) => updateField("businessName", e.target.value)} placeholder="Company name" />
                     </label>
                     <label>
                         Phone
@@ -410,9 +438,11 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                     </label>
                     <label className="msm-full">
                         Biggest Problem
-                        <textarea required value={form.problem} onChange={(e) => updateField("problem", e.target.value)} placeholder="Not enough calls, poor rankings, outdated website, weak reviews..." />
+                        <textarea required value={form.biggestProblem} onChange={(e) => updateField("biggestProblem", e.target.value)} placeholder="Not enough calls, poor rankings, outdated website, weak reviews..." />
                     </label>
-                    <button className="msm-button msm-button-primary msm-full" type="submit">Request Free Visibility Audit</button>
+                    <button className="msm-button msm-button-primary msm-full" type="submit" disabled={submissionStatus === "submitting"}>
+                        {submissionStatus === "submitting" ? "Sending Audit Request..." : "Request Free Visibility Audit"}
+                    </button>
                 </form>
             </section>
 
@@ -884,6 +914,14 @@ html { scroll-behavior: smooth; }
 
 .msm-form textarea { min-height: 112px; resize: vertical; }
 .msm-full { grid-column: 1 / -1; }
+
+.msm-honeypot {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
 
 .msm-form-note,
 .msm-form-error {
