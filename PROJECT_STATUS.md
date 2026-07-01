@@ -7,6 +7,7 @@
 - The audit API accepts `POST` only, validates required fields, requires either email or phone, uses a honeypot spam field, and reads only `RESEND_API_KEY`, `AUDIT_TO_EMAIL`, and `AUDIT_FROM_EMAIL` from environment variables.
 - Updated the Free Visibility Audit form to post JSON to `/api/audit-request`.
 - Added successful delivery messaging while preserving the visible manual fallback contact info and fallback failure message.
+- Confirmed Vercel audit destination environment variable: `AUDIT_TO_EMAIL=mainstreetmediatn@gmail.com`.
 - No API keys or `.env` files were added.
 - Build verification: `npm run build` completed successfully.
 
