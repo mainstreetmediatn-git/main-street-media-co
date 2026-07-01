@@ -1,5 +1,14 @@
 # Project Status
 
+## 2026-07-01 Calendly Audit Call CTA
+
+- Added the Calendly booking link `https://calendly.com/mainstreetmediatn/30min` as a secondary conversion path across the Main Street Media Co. website.
+- Updated homepage header, hero, audit form success/fallback messages, and footer with free audit call booking links.
+- Updated WebAuthority navigation, landing hero, reusable CTA block, and footer so the WebAuthority hub, article index, and article pages include a "Book Free Audit Call" path.
+- External Calendly links use `target="_blank"` and `rel="noreferrer"`.
+- Preserved the audit form as the primary CTA and did not change the email backend.
+- Build verification: `npm run build` completed successfully.
+
 ## 2026-07-01 Free Visibility Audit Email Delivery
 
 - Installed `resend` in this project for server-side email delivery.

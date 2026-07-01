@@ -4,6 +4,7 @@ import { getWebAuthorityArticle, webAuthorityArticles, type WebAuthorityArticle 
 const auditHref = "/#audit-form"
 const hubHref = "/web-authority"
 const articlesHref = "/web-authority/articles"
+const calendlyHref = "https://calendly.com/mainstreetmediatn/30min"
 
 export function WebAuthorityRoute({ path }: { path: string }) {
     const slug = path.replace(/^\/web-authority\/?/, "").replace(/^articles\/?/, "")
@@ -57,7 +58,7 @@ function WebAuthorityLayout({ children }: { children: React.ReactNode }) {
                         <a href={articlesHref}>Articles</a>
                         <a href={auditHref}>Visibility Audit</a>
                     </div>
-                    <a className="wa-nav-cta" href={auditHref}>Request Free Visibility Audit</a>
+                    <a className="wa-nav-cta" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
                 </nav>
             </header>
             {children}
@@ -66,7 +67,10 @@ function WebAuthorityLayout({ children }: { children: React.ReactNode }) {
                     <strong>Main Street Media Co.</strong>
                     <p>Helping Great Local Businesses Become Impossible to Ignore.</p>
                 </div>
-                <a className="wa-button wa-button-secondary" href={hubHref}>Back to WebAuthority</a>
+                <div className="wa-footer-actions">
+                    <a className="wa-button wa-button-secondary" href={hubHref}>Back to WebAuthority</a>
+                    <a className="wa-button wa-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
+                </div>
             </footer>
         </main>
     )
@@ -92,6 +96,7 @@ export function WebAuthorityLanding() {
                     </p>
                     <div className="wa-actions">
                         <a className="wa-button wa-button-primary" href={auditHref}>Request Free Visibility Audit</a>
+                        <a className="wa-button wa-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
                         <a className="wa-button wa-button-secondary" href={articlesHref}>Browse Articles</a>
                     </div>
                 </div>
@@ -282,7 +287,10 @@ function WebAuthorityCTA() {
                 <h2>Find the visibility, trust, and conversion gaps costing you local calls.</h2>
                 <p>Request a practical review of your website, Google Business Profile, local search presence, and lead path.</p>
             </div>
-            <a className="wa-button wa-button-primary" href={auditHref}>Request Free Visibility Audit</a>
+            <div className="wa-cta-actions">
+                <a className="wa-button wa-button-primary" href={auditHref}>Request Free Visibility Audit</a>
+                <a className="wa-button wa-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
+            </div>
         </section>
     )
 }
@@ -388,7 +396,7 @@ html { scroll-behavior: smooth; }
     align-items: center;
     gap: 22px;
 }
-.wa-brand, .wa-actions, .wa-nav-links, .wa-chip-grid, .wa-related-links { display: flex; align-items: center; }
+.wa-brand, .wa-actions, .wa-nav-links, .wa-chip-grid, .wa-related-links, .wa-cta-actions, .wa-footer-actions { display: flex; align-items: center; }
 .wa-brand { gap: 12px; font-weight: 950; }
 .wa-logo {
     width: 42px;
@@ -528,6 +536,8 @@ html { scroll-behavior: smooth; }
 .wa-chip-grid { flex-wrap: wrap; gap: 12px; }
 .wa-featured-row, .wa-cta { padding: 34px; }
 .wa-featured-row .wa-button, .wa-cta .wa-button { justify-self: end; }
+.wa-cta-actions, .wa-footer-actions { justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+.wa-cta-actions { justify-self: end; }
 .wa-article-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .wa-article-meta span {
     border: 1px solid var(--wa-line);
@@ -573,7 +583,7 @@ html { scroll-behavior: smooth; }
     .wa-hero, .wa-two-col, .wa-industries, .wa-cta, .wa-featured-row, .wa-article-layout { grid-template-columns: 1fr; }
     .wa-hero { min-height: auto; }
     .wa-card-grid, .wa-framework, .wa-article-grid { grid-template-columns: 1fr 1fr; }
-    .wa-featured-row .wa-button, .wa-cta .wa-button { justify-self: start; }
+    .wa-featured-row .wa-button, .wa-cta .wa-button, .wa-cta-actions { justify-self: start; }
     .wa-toc { position: static; }
 }
 @media (max-width: 640px) {
@@ -585,7 +595,8 @@ html { scroll-behavior: smooth; }
     .wa-nav-cta { min-height: 38px; padding: 9px 12px; font-size: 12px; }
     .wa-hero h1, .wa-index-hero h1, .wa-article-hero h1 { font-size: clamp(40px, 12vw, 58px); }
     .wa-card-grid, .wa-framework, .wa-article-grid, .wa-mini-grid { grid-template-columns: 1fr; }
-    .wa-button, .wa-footer { width: 100%; }
+    .wa-button, .wa-footer, .wa-cta-actions, .wa-footer-actions { width: 100%; }
     .wa-footer { flex-direction: column; align-items: flex-start; }
+    .wa-cta-actions, .wa-footer-actions { flex-direction: column; align-items: stretch; }
 }
 `

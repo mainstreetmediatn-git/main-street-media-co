@@ -31,6 +31,8 @@ const initialForm: AuditFormState = {
 
 type SubmissionStatus = "idle" | "submitting" | "sent" | "fallback"
 
+const calendlyHref = "https://calendly.com/mainstreetmediatn/30min"
+
 const services: Card[] = [
     {
         title: "Findability Foundation",
@@ -216,7 +218,7 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                         <a href="#web-authority">WebAuthority</a>
                         <a href="#audit-form">Audit</a>
                     </div>
-                    <a className="msm-nav-cta" href="#audit-form">Request Free Visibility Audit</a>
+                    <a className="msm-nav-cta" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
                 </nav>
             </header>
 
@@ -228,8 +230,8 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                         Main Street Media Co. helps local service businesses turn their website into a visibility engine built to rank, earn trust, and convert visitors into real calls, quote requests, and booked jobs.
                     </p>
                     <div className="msm-actions">
-                        <a className="msm-button msm-button-primary" href="#audit-form">Request Your Free Visibility Audit</a>
-                        <a className="msm-button msm-button-secondary" href="#pain">See What Is Holding Your Website Back</a>
+                        <a className="msm-button msm-button-primary" href="#audit-form">Request Free Visibility Audit</a>
+                        <a className="msm-button msm-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book a Free Audit Call</a>
                     </div>
                     <div className="msm-stat-strip" aria-label="Core outcomes">
                         <span>Local SEO</span>
@@ -390,13 +392,19 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                     {submissionStatus === "sent" && (
                         <div className="msm-form-success msm-full" role="status" aria-live="polite">
                             <strong>Audit request sent.</strong>
-                            <p>Your audit request has been sent. Main Street Media Co. will review it and follow up soon.</p>
+                            <p>
+                                Your audit request has been sent. Main Street Media Co. will review it and follow up soon. You can also{" "}
+                                <a href={calendlyHref} target="_blank" rel="noreferrer">book your free audit call here</a>.
+                            </p>
                         </div>
                     )}
                     {submissionStatus === "fallback" && (
                         <div className="msm-form-success msm-full" role="status" aria-live="polite">
                             <strong>Audit request prepared.</strong>
-                            <p>Your audit request has been prepared. Until automated delivery is connected, please email mainstreetmediatn@gmail.com or call 949-447-4490.</p>
+                            <p>
+                                Your audit request has been prepared. Until automated delivery is connected, please email mainstreetmediatn@gmail.com or call 949-447-4490. Or book directly here:{" "}
+                                <a href={calendlyHref} target="_blank" rel="noreferrer">{calendlyHref}</a>
+                            </p>
                         </div>
                     )}
                     <div className="msm-form-note msm-full">
@@ -451,7 +459,10 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                     <strong>Main Street Media Co.</strong>
                     <p>Helping Great Local Businesses Become Impossible to Ignore.</p>
                 </div>
-                <a className="msm-button msm-button-secondary" href="#audit-form">Request Free Visibility Audit</a>
+                <div className="msm-footer-actions">
+                    <a className="msm-button msm-button-secondary" href="#audit-form">Request Free Visibility Audit</a>
+                    <a className="msm-button msm-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
+                </div>
             </footer>
         </main>
     )
@@ -714,7 +725,8 @@ html { scroll-behavior: smooth; }
 .msm-dashboard { padding: 24px; }
 
 .msm-dashboard-top,
-.msm-footer {
+.msm-footer,
+.msm-footer-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -965,6 +977,13 @@ html { scroll-behavior: smooth; }
     color: var(--msm-muted);
 }
 
+.msm-form-success a {
+    color: var(--msm-gold-soft);
+    font-weight: 900;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
 .msm-footer {
     max-width: 1180px;
     margin: 0 auto;
@@ -1016,10 +1035,12 @@ html { scroll-behavior: smooth; }
 
     .msm-actions,
     .msm-button,
-    .msm-footer {
+    .msm-footer,
+    .msm-footer-actions {
         width: 100%;
     }
 
     .msm-footer { flex-direction: column; align-items: flex-start; }
+    .msm-footer-actions { flex-direction: column; align-items: stretch; }
 }
 `
