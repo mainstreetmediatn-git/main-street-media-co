@@ -1,5 +1,16 @@
 # Project Status
 
+## 2026-07-10 Phase 2 Crawl Package Delivery
+
+- Extended `api/lead-crawl.ts` beyond raw crawl scoring so it now returns additive phase-2 automation data for:
+  - `Visibility Audit` package drafting
+  - `What-If Package` drafting
+  - CRM update hints
+  - workflow handoff guidance for Make, n8n, or Zapier
+- Preserved the existing crawl score, grade, signals, opportunities, and page output so current callers remain compatible.
+- Added real delivery hooks so crawl output can now be emailed and/or POSTed to a configured webhook destination through `RESEND_API_KEY`, `LEAD_CRAWL_TO_EMAIL`, `LEAD_CRAWL_FROM_EMAIL`, and `LEAD_CRAWL_WEBHOOK_URL`.
+- The next expansion step is to connect the webhook target to the actual CRM or automation pipeline and store the generated package artifacts there.
+
 ## 2026-07-01 Calendly Link Behavior Fix
 
 - Confirmed no `xdg-open` or `window.open` references are present in the project.
