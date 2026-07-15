@@ -1,5 +1,6 @@
 import MainStreetWebAuthorityPage from "./MainStreetWebAuthorityPage"
 import { WebAuthorityRoute } from "./WebAuthority"
+import "./enterprise.css"
 
 export default function App() {
     const path = window.location.pathname
