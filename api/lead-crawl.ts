@@ -1,6 +1,7 @@
 import { lookup } from "dns/promises"
 import net from "net"
 import { Resend } from "resend"
+import { generateAuditBundle, type AuditBundle } from "./services/audit-engine"
 
 declare const process: {
     env: Record<string, string | undefined>
@@ -74,6 +75,7 @@ type DeliveryResult = {
 type PhaseTwoResponse = CrawlResponse & {
     phase: "discovery"
     leadPriority: "high" | "medium" | "low"
+    auditBundle: AuditBundle
     packageDrafts: {
         visibilityAudit: PackageDraft
         whatIfPackage: PackageDraft
@@ -141,6 +143,24 @@ async function isPublicHostname(hostname: string) {
         }
         return false
     })
+}
+
+function allowPrivateHosts() {
+    return process.env.NODE_ENV !== "production" || process.env.LEAD_CRAWL_ALLOW_PRIVATE_HOSTS === "true"
+}
+
+async function isCrawlableHostname(hostname: string) {
+    if (await isPublicHostname(hostname)) return true
+
+    if (!allowPrivateHosts()) return false
+
+    return (
+        hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname === "::1" ||
+        net.isIP(hostname) !== 0 ||
+        hostname.endsWith(".local")
+    )
 }
 
 function normalizeUrl(url: URL) {
@@ -297,37 +317,24 @@ function leadPriorityFor(score: number, pagesCrawled: number): "high" | "medium"
     return "low"
 }
 
-function buildPackageDrafts(result: CrawlResponse): PhaseTwoResponse["packageDrafts"] {
-    const primaryPage = result.pages[0]
-    const topFindings = result.opportunities.slice(0, 3)
-    const serviceAreaSummary = primaryPage?.title || primaryPage?.description || "the homepage and core service pages"
+function bundleToPackageDrafts(bundle: AuditBundle): PhaseTwoResponse["packageDrafts"] {
+    const visibilityAudit = bundle.documents.revealVisibilityAudit
+    const whatIfPackage = bundle.documents.whatIfPackage
 
     return {
         visibilityAudit: {
-            title: "Visibility Audit",
-            summary: `A concise review of ${serviceAreaSummary} showing what is blocking calls, quotes, and booked jobs.`,
-            priorityFindings: topFindings.length > 0 ? topFindings : ["No obvious blockers found from the first crawl pass."],
-            recommendedActions: [
-                "Review the highest-leverage on-page issues first.",
-                "Map each issue to a specific owner: web, content, sales, or CRM.",
-                "Convert the audit into a tracked follow-up task list.",
-            ],
-            folderName: "Visibility Audit",
+            title: visibilityAudit.title,
+            summary: visibilityAudit.summary,
+            priorityFindings: visibilityAudit.priorityFindings,
+            recommendedActions: visibilityAudit.recommendedActions,
+            folderName: visibilityAudit.folderName,
         },
         whatIfPackage: {
-            title: "What-If Package",
-            summary: "A scenario-based package showing what changes are worth making first, what they unlock, and what the follow-up workflow should create.",
-            priorityFindings: [
-                `Current score: ${result.score}/100 (${result.grade})`,
-                `${result.pagesCrawled} page${result.pagesCrawled === 1 ? "" : "s"} crawled`,
-                `${result.internalLinks} internal link${result.internalLinks === 1 ? "" : "s"} discovered`,
-            ],
-            recommendedActions: [
-                "Bundle the findings into a client-ready proposal.",
-                "Attach the crawl output to the CRM record before assignment.",
-                "Route the package to the next internal review step after generation.",
-            ],
-            folderName: "What-If Package",
+            title: whatIfPackage.title,
+            summary: whatIfPackage.summary,
+            priorityFindings: whatIfPackage.priorityFindings,
+            recommendedActions: whatIfPackage.recommendedActions,
+            folderName: whatIfPackage.folderName,
         },
     }
 }
@@ -359,9 +366,9 @@ function buildLeadCrawlSubject(result: CrawlResponse) {
     return `Lead Crawl Package: ${result.grade} (${result.score}/100)`
 }
 
-function buildLeadCrawlText(result: PhaseTwoResponse, sourceUrl: string) {
-    const packageDraft = result.packageDrafts.visibilityAudit
-    const whatIfDraft = result.packageDrafts.whatIfPackage
+function buildLeadCrawlText(result: PhaseTwoResponse, sourceUrl: string, destinationTargets: string[]) {
+    const packageDraft = result.auditBundle.documents.revealVisibilityAudit
+    const whatIfDraft = result.auditBundle.documents.whatIfPackage
 
     return [
         "New lead crawl package",
@@ -389,6 +396,10 @@ function buildLeadCrawlText(result: PhaseTwoResponse, sourceUrl: string) {
         ...whatIfDraft.priorityFindings.map((finding) => `- ${finding}`),
         ...whatIfDraft.recommendedActions.map((action) => `- ${action}`),
         "",
+        "Artifact structure:",
+        `- ${result.auditBundle.structure.rootFolder}`,
+        ...result.auditBundle.artifacts.map((artifact) => `- ${artifact.path}`),
+        "",
         "Automation handoff:",
         `Trigger: ${result.automation.trigger}`,
         `Workflow: ${result.automation.workflow}`,
@@ -396,7 +407,7 @@ function buildLeadCrawlText(result: PhaseTwoResponse, sourceUrl: string) {
         ...result.automation.crmUpdate.map((line) => `- ${line}`),
         "",
         "Destination:",
-        ...result.delivery.configuredTargets.map((target) => `- ${target}`),
+        ...destinationTargets.map((target) => `- ${target}`),
     ].join("\n")
 }
 
@@ -437,7 +448,7 @@ async function deliverPackage(result: PhaseTwoResponse, sourceUrl: string) {
                 from: fromEmail,
                 to: [toEmail],
                 subject: buildLeadCrawlSubject(result),
-                text: buildLeadCrawlText(result, sourceUrl),
+                text: buildLeadCrawlText(result, sourceUrl, configuredTargets),
                 replyTo: fromEmail,
             })
 
@@ -514,8 +525,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: "url must use http or https" })
     }
 
-    if (!(await isPublicHostname(startUrl.hostname))) {
-        return res.status(400).json({ error: "url must resolve to a public hostname" })
+    if (!(await isCrawlableHostname(startUrl.hostname))) {
+        return res.status(400).json({ error: "url must resolve to a crawlable hostname" })
     }
 
     const rootHost = normalizeHost(startUrl.hostname)
@@ -523,7 +534,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const queue = [normalizeUrl(startUrl)]
     const discovered = new Set<string>(queue)
     const pages: CrawledPage[] = []
-    const userAgent = "MainStreetLeadCrawler/1.0 (+https://main-street-media-co.vercel.app)"
+    const userAgent = "MainStreetLeadCrawler/1.0 (+https://mainstreetmediaco.vercel.app)"
 
     while (queue.length > 0 && pages.length < maxPages) {
         const currentUrl = queue.shift()
@@ -597,7 +608,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ].reduce((sum, value) => sum + value, 0) + (pages.length >= 4 ? 5 : pages.length >= 2 ? 3 : 0) + (pages.some((page) => page.hasPhone && page.hasForm) ? 5 : 0),
     )
 
-    const leadPriority = leadPriorityFor(score, pages.length)
     const baseResponse: CrawlResponse = {
         inputUrl: normalizeUrl(startUrl),
         score,
@@ -612,12 +622,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const opportunities = buildOpportunities(baseResponse)
     const crawlResult: CrawlResponse = { ...baseResponse, opportunities }
+    const leadPriority = leadPriorityFor(score, pages.length)
+    const auditBundle = generateAuditBundle({
+        ...crawlResult,
+        leadPriority,
+        source: "lead-crawl",
+        businessName: startUrl.hostname.replace(/^www\./, ""),
+    })
 
     const response: PhaseTwoResponse = {
         ...crawlResult,
         phase: "discovery",
         leadPriority,
-        packageDrafts: buildPackageDrafts(crawlResult),
+        auditBundle,
+        packageDrafts: bundleToPackageDrafts(auditBundle),
         automation: buildAutomation(crawlResult, leadPriority),
         delivery: {
             status: "not_configured",

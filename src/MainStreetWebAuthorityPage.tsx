@@ -118,12 +118,12 @@ const industries = [
 ]
 
 const trustSignals = [
-    "Local SEO",
-    "Trust Signals",
-    "Call Conversion",
-    "Service-area relevance",
-    "Website authority",
+    "Homepage clarity",
+    "Service page depth",
+    "Review and proof placement",
     "Google Business Profile alignment",
+    "Call path friction",
+    "Local schema signals",
 ]
 
 const fixFirst = [
@@ -135,6 +135,13 @@ const fixFirst = [
     "Poor mobile experience",
     "Missing reviews",
     "No authority content strategy",
+]
+
+const auditDeliverables = [
+    "1-page visibility summary",
+    "3 priority fixes ranked by impact",
+    "Call path and form friction review",
+    "What to fix first this week",
 ]
 
 /**
@@ -149,8 +156,8 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
     const [contactError, setContactError] = useState("")
 
     React.useEffect(() => {
-        const title = "Main Street Media Co. | Local Visibility, SEO, and Lead Conversion"
-        const description = "Main Street Media Co. helps local service businesses improve Google visibility, earn trust, and turn website visitors into calls, quote requests, and predictable growth."
+        const title = "Main Street Media Co. | Booked-Call Engine for Local Service Businesses"
+        const description = "Main Street Media Co. helps local service businesses turn search traffic into booked calls with clearer positioning, stronger proof, and better conversion flow."
         const url = "https://mainstreetmediaco.com/"
         const image = "https://mainstreetmediaco.com/og-image.jpg"
 
@@ -218,21 +225,23 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                         <a href="#web-authority">WebAuthority</a>
                         <a href="#audit-form">Audit</a>
                     </div>
-                    <a className="msm-nav-cta" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
+                    <a className="msm-nav-cta" href="#audit-form">Request Free Visibility Audit</a>
                 </nav>
             </header>
 
             <section id="top" className="msm-hero msm-section">
                 <div className="msm-hero-copy">
-                    <p className="msm-kicker">Helping Great Local Businesses Become Impossible to Ignore.</p>
-                    <h1>Build a website Google trusts and customers choose.</h1>
+                    <p className="msm-kicker">Helping service businesses win the local call.</p>
+                    <h1>Turn your local service website into a booked-call engine.</h1>
                     <p className="msm-lede">
-                        Main Street Media Co. helps local service businesses turn their website into a visibility engine built to rank, earn trust, and convert visitors into real calls, quote requests, and booked jobs.
+                        Main Street Media Co. helps local service businesses tighten their message, prove credibility faster, and turn search traffic into quote requests and booked jobs.
                     </p>
                     <div className="msm-actions">
                         <a className="msm-button msm-button-primary" href="#audit-form">Request Free Visibility Audit</a>
-                        <a className="msm-button msm-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
                     </div>
+                    <p className="msm-secondary-cta">
+                        Prefer to talk first? <a href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>.
+                    </p>
                     <div className="msm-stat-strip" aria-label="Core outcomes">
                         <span>Local SEO</span>
                         <span>Trust Signals</span>
@@ -266,25 +275,10 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                 {trustSignals.map((signal) => <span key={signal}>{signal}</span>)}
             </section>
 
-            <section id="pain" className="msm-section msm-two-col">
-                <div>
-                    <p className="msm-eyebrow">The local visibility gap</p>
-                    <h2>A pretty website is not enough anymore.</h2>
-                    <p>
-                        Local buyers move fast. They compare search results, reviews, websites, and trust signals in minutes. If your online presence is unclear, thin, slow, or generic, better-positioned competitors win the call.
-                    </p>
-                </div>
-                <div className="msm-card-grid">
-                    {painPoints.map((item) => (
-                        <InfoCard key={item.title} title={item.title} body={item.body} />
-                    ))}
-                </div>
-            </section>
-
             <section id="services" className="msm-section msm-services">
                 <div className="msm-section-head">
                     <p className="msm-eyebrow">What we fix first</p>
-                    <h2>Turn your website into a clearer path to calls, trust, and local relevance.</h2>
+                    <h2>Build the clarity, proof, and structure that make buyers act faster.</h2>
                 </div>
                 <div className="msm-services-grid">
                     {services.map((service) => (
@@ -315,7 +309,7 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
             <section id="web-authority" className="msm-section msm-web-authority">
                 <div className="msm-web-authority-copy">
                     <p className="msm-eyebrow">WebAuthority</p>
-                    <h2>Authority content for local companies that want to educate, rank, and convert.</h2>
+                    <h2>Authority content that supports the core offer instead of competing with it.</h2>
                     <p>
                         WebAuthority is Main Street Media Co.'s education hub for local SEO, reputation, website authority, and conversion. It gives owners plain-English guidance they can use before spending more on ads.
                     </p>
@@ -352,23 +346,23 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                 <div className="msm-proof-panel">
                     <div>
                         <p className="msm-eyebrow">Proof and trust</p>
-                        <h2>Credibility built into the path from search to sale.</h2>
+                        <h2>What the audit checks, and what you get back.</h2>
                         <p>
-                            Main Street Media Co. focuses on the practical signals customers and search engines both need: clarity, relevance, proof, and a low-friction path to action.
+                            The goal is not a vague consultation. The goal is a useful, decision-ready readout that tells a local business owner what is missing and what to fix first.
                         </p>
                     </div>
                     <div className="msm-trust-grid">
-                        {trustSignals.map((signal) => <span key={signal}>{signal}</span>)}
+                        {auditDeliverables.map((signal) => <span key={signal}>{signal}</span>)}
                     </div>
                 </div>
                 <div className="msm-before-after">
                     <article>
                         <span>Before</span>
-                        <p>Low rankings, unclear messaging, weak service pages, poor lead flow, and missing trust signals.</p>
+                        <p>Generic positioning, hidden proof, weak service pages, and a path to contact that feels harder than it should.</p>
                     </article>
                     <article>
                         <span>After</span>
-                        <p>Stronger Google relevance, better customer trust, clearer positioning, more qualified calls, and stronger Google Business Profile support.</p>
+                        <p>A clearer offer, stronger trust signals, better local relevance, and a conversion path a buyer can understand in seconds.</p>
                     </article>
                 </div>
             </section>
@@ -376,15 +370,21 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
             <section id="audit-form" className="msm-section msm-audit-section">
                 <div>
                     <p className="msm-eyebrow">Free visibility audit</p>
-                    <h2>See what is holding your website back before your next customer searches.</h2>
+                    <h2>Get a concise visibility readout before your next customer searches.</h2>
                     <p>
-                        We will review the signals that help local customers find you, trust you, and take action. No fake guarantees, just a clear look at what can be improved.
+                        You’ll get a simple review of what is making the site harder to find, harder to trust, and harder to contact. No fake guarantees, just a clear next step.
                     </p>
                     <div className="msm-audit-points">
                         <span>Website clarity</span>
                         <span>Local SEO gaps</span>
                         <span>Trust signals</span>
                         <span>Lead path friction</span>
+                    </div>
+                    <div className="msm-audit-note">
+                        <strong>What you receive:</strong>
+                        <ul>
+                            {auditDeliverables.map((item) => <li key={item}>{item}</li>)}
+                        </ul>
                     </div>
                 </div>
 
@@ -393,7 +393,7 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                         <div className="msm-form-success msm-full" role="status" aria-live="polite">
                             <strong>Audit request sent.</strong>
                             <p>
-                                Your audit request has been sent. Main Street Media Co. will review it and follow up soon. You can also{" "}
+                                Your audit request has been sent. Main Street Media Co. will review it and follow up soon with a concise readout and next steps. You can also{" "}
                                 <a href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>.
                             </p>
                         </div>
@@ -652,6 +652,19 @@ html { scroll-behavior: smooth; }
     flex-wrap: wrap;
     gap: 14px;
     margin-top: 34px;
+}
+
+.msm-secondary-cta {
+    margin-top: 14px;
+    color: var(--msm-muted);
+    font-size: 16px;
+}
+
+.msm-secondary-cta a {
+    color: var(--msm-gold-soft);
+    font-weight: 900;
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 .msm-button {
@@ -940,6 +953,28 @@ html { scroll-behavior: smooth; }
     border-radius: 14px;
     padding: 14px;
     line-height: 1.45;
+}
+
+.msm-audit-note {
+    margin-top: 16px;
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(243, 207, 115, 0.24);
+    background: rgba(243, 207, 115, 0.06);
+}
+
+.msm-audit-note strong {
+    display: block;
+    color: var(--msm-text);
+    margin-bottom: 10px;
+}
+
+.msm-audit-note ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--msm-muted);
+    display: grid;
+    gap: 8px;
 }
 
 .msm-form-note {

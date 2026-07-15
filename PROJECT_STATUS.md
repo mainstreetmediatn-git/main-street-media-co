@@ -1,5 +1,25 @@
 # Project Status
 
+## 2026-07-11 Local Crawl Support for the New Landing Page
+
+- Relaxed `api/lead-crawl.ts` hostname validation so the crawler can target local or private hosts in development while keeping the public-host restriction in production.
+- Added the `LEAD_CRAWL_ALLOW_PRIVATE_HOSTS=true` override for cases where the new landing page is running on `localhost` or another private dev hostname.
+- The crawler still rejects private targets in production unless that override is explicitly enabled.
+
+## 2026-07-11 Homepage Positioning and Crawlability Pass
+
+- Tightened the homepage positioning around a single promise: turning local service traffic into booked calls.
+- Made `Request Free Visibility Audit` the primary CTA in the header and hero, with `Book Free Audit Call` demoted to a secondary text link.
+- Removed the broad pain section from the homepage flow so the page now moves more directly from offer to proof to audit.
+- Reworked the proof section into a more concrete audit-deliverable summary, including:
+  - 1-page visibility summary
+  - 3 priority fixes ranked by impact
+  - call path and form friction review
+  - what to fix first this week
+- Added a `noscript` fallback in `index.html` with real copy and internal links so non-JS crawlers can see meaningful page text and route targets.
+- Updated page metadata to match the tighter position and booked-call framing.
+- Build verification: `npm run build` completed successfully.
+
 ## 2026-07-10 Phase 2 Crawl Package Delivery
 
 - Extended `api/lead-crawl.ts` beyond raw crawl scoring so it now returns additive phase-2 automation data for:
