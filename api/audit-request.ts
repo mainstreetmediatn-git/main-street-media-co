@@ -24,7 +24,7 @@ type VercelResponse = {
 const EDGE_FUNCTION_URL =
   "https://wdxalrvkrmeewnqiqxqk.supabase.co/functions/v1/audit-request"
 
-const PRODUCTION_ORIGIN = "https://mainstreetmediaco.com"
+const PRODUCTION_ORIGIN = "https://main-street-media-co.vercel.app"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Cache-Control", "no-store")
