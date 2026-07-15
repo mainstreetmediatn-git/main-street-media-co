@@ -24,6 +24,8 @@ type VercelResponse = {
 const EDGE_FUNCTION_URL =
   "https://wdxalrvkrmeewnqiqxqk.supabase.co/functions/v1/audit-request"
 
+const PRODUCTION_ORIGIN = "https://mainstreetmediaco.com"
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Cache-Control", "no-store")
   res.setHeader("Allow", "POST, OPTIONS")
@@ -51,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Origin: "https://mainstreetmedia.pages.dev",
+        Origin: PRODUCTION_ORIGIN,
       },
       body: JSON.stringify({
         contact_name: body.name,
