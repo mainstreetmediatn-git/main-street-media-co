@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mainstreet-local-scraper"
+version = "0.1.0"
+description = "Main Street Media-assigned local crawling swarm with a Firecrawl toolbelt."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "firecrawl-py>=4.3.0",
+  "pydantic>=2.8.0",
+  "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2.0",
+  "ruff>=0.5.0",
+]
+
+[project.scripts]
+mainstreet-scraper = "local_scraper.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/local_scraper"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

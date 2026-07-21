@@ -86,6 +86,7 @@ type PhaseTwoResponse = CrawlResponse & {
 
 const FETCH_TIMEOUT_MS = 10_000
 const MAX_REDIRECTS = 5
+const FIRECRAWL_DEFAULT_API_URL = "https://api.firecrawl.dev/v2"
 
 function text(value: unknown) {
     return typeof value === "string" ? value.trim() : ""
@@ -173,6 +174,24 @@ function normalizeUrl(url: URL) {
     return normalized.toString()
 }
 
+function firecrawlApiUrl() {
+    return (text(process.env.FIRECRAWL_API_URL) || FIRECRAWL_DEFAULT_API_URL).replace(/\/+$/, "")
+}
+
+function hasFirecrawl() {
+    return Boolean(text(process.env.FIRECRAWL_API_KEY))
+}
+
+function isFirecrawlEligibleHostname(hostname: string) {
+    if (!hostname || hostname === "localhost" || hostname.endsWith(".local")) return false
+
+    const numericType = net.isIP(hostname)
+    if (numericType === 4) return !isPrivateIPv4(hostname)
+    if (numericType === 6) return !isPrivateIPv6(hostname)
+
+    return true
+}
+
 function stripHtml(html: string) {
     return html
         .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -229,6 +248,39 @@ function parsePage(url: URL, html: string): { page: CrawledPage; links: string[]
 }
 
 async function fetchHtml(url: URL, userAgent: string, rootHost: string) {
+    const firecrawlKey = text(process.env.FIRECRAWL_API_KEY)
+    if (firecrawlKey) {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+
+        try {
+            const response = await fetch(`${firecrawlApiUrl()}/scrape`, {
+                method: "POST",
+                headers: {
+                    authorization: `Bearer ${firecrawlKey}`,
+                    "content-type": "application/json",
+                },
+                body: JSON.stringify({ url: normalizeUrl(url), formats: ["html"] }),
+                signal: controller.signal,
+            })
+            const payload = await response.json().catch(() => null) as {
+                success?: boolean
+                data?: { html?: unknown; metadata?: { url?: unknown; sourceURL?: unknown } }
+            } | null
+            const html = text(payload?.data?.html)
+            const resolvedUrl = text(payload?.data?.metadata?.url) || text(payload?.data?.metadata?.sourceURL) || url.toString()
+            const parsedUrl = new URL(resolvedUrl)
+
+            if (response.ok && payload?.success !== false && html && normalizeHost(parsedUrl.hostname) === rootHost) {
+                return { url: parsedUrl, html }
+            }
+        } catch {
+            // Fall back to the direct fetcher when Firecrawl is unavailable.
+        } finally {
+            clearTimeout(timeout)
+        }
+    }
+
     let currentUrl = new URL(url.toString())
 
     for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
@@ -277,7 +329,7 @@ async function fetchHtml(url: URL, userAgent: string, rootHost: string) {
             return null
         }
 
-        return { response, url: currentUrl, html }
+        return { url: currentUrl, html }
     }
 
     return null
@@ -412,10 +464,23 @@ function buildLeadCrawlText(result: PhaseTwoResponse, sourceUrl: string, destina
 }
 
 function buildDeliveryPayload(result: PhaseTwoResponse, sourceUrl: string) {
+    const runId = result.auditBundle.bundleId
+
     return {
         sourceUrl,
+        runId,
+        idempotencyKey: `lead-crawl:${runId}`,
         generatedAt: new Date().toISOString(),
         ...result,
+    }
+}
+
+function isGoogleAppsScriptExecUrl(value: string) {
+    try {
+        const url = new URL(value)
+        return url.protocol === "https:" && url.hostname === "script.google.com" && url.pathname.endsWith("/exec")
+    } catch {
+        return false
     }
 }
 
@@ -428,9 +493,12 @@ async function deliverPackage(result: PhaseTwoResponse, sourceUrl: string) {
     const toEmail = process.env.LEAD_CRAWL_TO_EMAIL || process.env.AUDIT_TO_EMAIL
     const fromEmail = process.env.LEAD_CRAWL_FROM_EMAIL || process.env.AUDIT_FROM_EMAIL
     const webhookUrl = process.env.LEAD_CRAWL_WEBHOOK_URL
+    const googleDriveWebhookUrl = process.env.LEAD_CRAWL_GOOGLE_DRIVE_WEBHOOK_URL
+    const googleDriveWebhookSecret = process.env.LEAD_CRAWL_GOOGLE_DRIVE_WEBHOOK_SECRET
 
     if (apiKey && toEmail && fromEmail) configuredTargets.push(`email:${toEmail}`)
     if (webhookUrl) configuredTargets.push(`webhook:${webhookUrl}`)
+    if (googleDriveWebhookUrl) configuredTargets.push("google_drive_crm")
 
     if (configuredTargets.length === 0) {
         return {
@@ -482,6 +550,45 @@ async function deliverPackage(result: PhaseTwoResponse, sourceUrl: string) {
         }
     }
 
+    if (googleDriveWebhookUrl) {
+        if (!isGoogleAppsScriptExecUrl(googleDriveWebhookUrl)) {
+            failedTargets.push("google_drive_crm")
+            return {
+                status: deliveredTargets.length > 0 ? "partial" as const : "failed" as const,
+                configuredTargets,
+                deliveredTargets,
+                failedTargets,
+            }
+        }
+
+        try {
+            const headers: Record<string, string> = {
+                "content-type": "application/json",
+            }
+            if (googleDriveWebhookSecret) {
+                headers["x-mainstreet-crawler-secret"] = googleDriveWebhookSecret
+            }
+
+            const response = await fetch(googleDriveWebhookUrl, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    target: "google_drive_crm",
+                    secret: googleDriveWebhookSecret || undefined,
+                    ...buildDeliveryPayload(result, sourceUrl),
+                }),
+            })
+
+            if (!response.ok) {
+                failedTargets.push("google_drive_crm")
+            } else {
+                deliveredTargets.push("google_drive_crm")
+            }
+        } catch {
+            failedTargets.push("google_drive_crm")
+        }
+    }
+
     return {
         status:
             failedTargets.length === 0
@@ -525,7 +632,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: "url must use http or https" })
     }
 
-    if (!(await isCrawlableHostname(startUrl.hostname))) {
+    const crawlableWithFirecrawl = hasFirecrawl() && isFirecrawlEligibleHostname(startUrl.hostname)
+    if (!crawlableWithFirecrawl && !(await isCrawlableHostname(startUrl.hostname))) {
         return res.status(400).json({ error: "url must resolve to a crawlable hostname" })
     }
 
@@ -541,33 +649,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!currentUrl || visited.has(currentUrl)) continue
         visited.add(currentUrl)
 
-        let response: Response
-        try {
-            response = await fetch(currentUrl, {
-                headers: {
-                    "user-agent": userAgent,
-                    accept: "text/html,application/xhtml+xml",
-                },
-                redirect: "follow",
-            })
-        } catch {
-            continue
-        }
+        const fetched = await fetchHtml(new URL(currentUrl), userAgent, rootHost)
+        if (!fetched) continue
 
-        const contentType = response.headers.get("content-type") || ""
-        if (!contentType.includes("text/html")) continue
-
-        let html = ""
-        try {
-            html = await response.text()
-        } catch {
-            continue
-        }
-
-        const parsedUrl = new URL(response.url || currentUrl)
+        const parsedUrl = fetched.url
         if (normalizeHost(parsedUrl.hostname) !== rootHost) continue
 
-        const { page, links } = parsePage(parsedUrl, html)
+        const { page, links } = parsePage(parsedUrl, fetched.html)
         pages.push(page)
 
         for (const link of links) {

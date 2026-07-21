@@ -1,5 +1,16 @@
 # Project Status
 
+## 2026-07-20 CRM Google Drive Crawler Delivery
+
+- Added a dedicated `google_drive_crm` delivery target to `api/lead-crawl.ts`.
+- The crawler now posts the generated phase-2 audit bundle to `LEAD_CRAWL_GOOGLE_DRIVE_WEBHOOK_URL` when configured.
+- Added optional shared-secret support through `LEAD_CRAWL_GOOGLE_DRIVE_WEBHOOK_SECRET`.
+- Documented the CRM Google Drive Apps Script bridge in `docs/CRM_GOOGLE_DRIVE_CRAWLER_ACCESS.md`.
+- Added a checked-in Apps Script bridge at `integrations/google-apps-script/msm-crm-drive-webhook.js`.
+- Added deployed `/exec` URL validation before the crawler posts to the Google Drive bridge.
+- The Apps Script bridge supports health checks, dry runs, lead folder reuse, standard lead subfolders, artifact upserts, a `crm-record.json` record, and run-id duplicate prevention.
+- Production activation remains blocked until real `CRM_GOOGLE_DRIVE_FOLDER_ID` and deployed Apps Script `/exec` URL values are supplied and validated.
+
 ## 2026-07-11 Local Crawl Support for the New Landing Page
 
 - Relaxed `api/lead-crawl.ts` hostname validation so the crawler can target local or private hosts in development while keeping the public-host restriction in production.
