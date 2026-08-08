@@ -1,5 +1,16 @@
 # Project Status
 
+## 2026-08-08 Production Stabilization In Progress
+
+- Confirmed `master` and `main` are unrelated histories and documented the file/config/behavior audit.
+- Confirmed the live Vercel bundle is stale relative to current `master`; deployment remains gated on preview parity review.
+- Preserved Resend notification to `mainstreetmediatn@gmail.com` and added durable storage before notification.
+- Added explicit storage, Resend, and analytics failure behavior with meaningful unit tests.
+- Added client conversion instrumentation and explicit Cal.com 15-minute and 30-minute booking links.
+- Pinned npm dependencies, resolved reported advisories, and added typecheck, lint, test, build, and conditional Datadog CI.
+- Local CI and primary-route production preview checks pass.
+- Remaining blockers are recorded in `docs/PRODUCTION_READINESS.md`; no production branch or environment setting has been changed.
+
 ## 2026-07-20 CRM Google Drive Crawler Delivery
 
 - Added a dedicated `google_drive_crm` delivery target to `api/lead-crawl.ts`.

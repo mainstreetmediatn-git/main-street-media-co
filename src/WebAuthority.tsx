@@ -4,7 +4,8 @@ import { getWebAuthorityArticle, webAuthorityArticles, type WebAuthorityArticle 
 const auditHref = "/#audit-form"
 const hubHref = "/web-authority"
 const articlesHref = "/web-authority/articles"
-const calendlyHref = "https://calendly.com/mainstreetmediatn/30min"
+const cal15Href = "https://cal.com/main-street-media-co-jfgesg/15min"
+const cal30Href = "https://cal.com/main-street-media-co-jfgesg/30min"
 
 export function WebAuthorityRoute({ path }: { path: string }) {
     const slug = path.replace(/^\/web-authority\/?/, "").replace(/^articles\/?/, "")
@@ -58,7 +59,7 @@ function WebAuthorityLayout({ children }: { children: React.ReactNode }) {
                         <a href={articlesHref}>Articles</a>
                         <a href={auditHref}>Visibility Audit</a>
                     </div>
-                    <a className="wa-nav-cta" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
+                    <a className="wa-nav-cta" href={cal30Href} target="_blank" rel="noreferrer">Book 30-Minute Audit Call</a>
                 </nav>
             </header>
             {children}
@@ -69,7 +70,7 @@ function WebAuthorityLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="wa-footer-actions">
                     <a className="wa-button wa-button-secondary" href={hubHref}>Back to WebAuthority</a>
-                    <a className="wa-button wa-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
+                    <a className="wa-button wa-button-secondary" href={cal30Href} target="_blank" rel="noreferrer">Book 30 Minutes</a>
                 </div>
             </footer>
         </main>
@@ -96,7 +97,8 @@ export function WebAuthorityLanding() {
                     </p>
                     <div className="wa-actions">
                         <a className="wa-button wa-button-primary" href={auditHref}>Request Free Visibility Audit</a>
-                        <a className="wa-button wa-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
+                        <a className="wa-button wa-button-secondary" href={cal15Href} target="_blank" rel="noreferrer">Book 15 Minutes</a>
+                        <a className="wa-button wa-button-secondary" href={cal30Href} target="_blank" rel="noreferrer">Book 30 Minutes</a>
                         <a className="wa-button wa-button-secondary" href={articlesHref}>Browse Articles</a>
                     </div>
                 </div>
@@ -289,7 +291,8 @@ function WebAuthorityCTA() {
             </div>
             <div className="wa-cta-actions">
                 <a className="wa-button wa-button-primary" href={auditHref}>Request Free Visibility Audit</a>
-                <a className="wa-button wa-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
+                <a className="wa-button wa-button-secondary" href={cal15Href} target="_blank" rel="noreferrer">Book 15 Minutes</a>
+                <a className="wa-button wa-button-secondary" href={cal30Href} target="_blank" rel="noreferrer">Book 30 Minutes</a>
             </div>
         </section>
     )

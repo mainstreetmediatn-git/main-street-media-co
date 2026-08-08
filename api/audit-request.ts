@@ -1,105 +1,126 @@
+import { randomUUID } from "node:crypto"
 import { Resend } from "resend"
+import { emitAuditAnalytics } from "./services/conversion-analytics"
+import { createLeadStore, type LeadStore } from "./services/lead-store"
+import { type AuditLead, type AuditRequestBody, validateAuditRequest } from "./services/audit-types"
 
-declare const process: {
-    env: Record<string, string | undefined>
-}
-
-type VercelRequest = {
-    method?: string
-    body?: unknown
-}
-
+type VercelRequest = { method?: string; body?: unknown }
 type VercelResponse = {
-    status: (code: number) => VercelResponse
-    setHeader: (name: string, value: string) => void
-    json: (body: unknown) => void
+  status: (code: number) => VercelResponse
+  setHeader: (name: string, value: string) => void
+  json: (body: unknown) => void
 }
 
-type AuditRequestBody = {
-    name?: unknown
-    businessName?: unknown
-    phone?: unknown
-    email?: unknown
-    website?: unknown
-    industry?: unknown
-    biggestProblem?: unknown
-    companyWebsite?: unknown
+type HandlerDependencies = {
+  env: Record<string, string | undefined>
+  leadStore: LeadStore
+  sendNotification: (lead: AuditLead) => Promise<void>
+  emitAnalytics: (event: "audit_request_successful" | "audit_request_failed", lead: AuditLead) => Promise<void>
+  now: () => Date
+  id: () => string
 }
 
-function text(value: unknown) {
-    return typeof value === "string" ? value.trim() : ""
+function defaultDependencies(): HandlerDependencies {
+  const env = process.env
+  return {
+    env,
+    leadStore: createLeadStore(env),
+    async sendNotification(lead) {
+      const apiKey = env.RESEND_API_KEY
+      const toEmail = env.AUDIT_TO_EMAIL || "mainstreetmediatn@gmail.com"
+      const fromEmail = env.AUDIT_FROM_EMAIL
+      if (!apiKey || !toEmail || !fromEmail) throw new Error("Resend delivery is not configured")
+      const resend = new Resend(apiKey)
+      const { error } = await resend.emails.send({
+        from: fromEmail,
+        to: [toEmail],
+        subject: `Free Visibility Audit Request: ${lead.businessName}`,
+        replyTo: lead.email || undefined,
+        text: [
+          "New Free Visibility Audit request",
+          "",
+          `Lead ID: ${lead.id}`,
+          `Name: ${lead.name}`,
+          `Business Name: ${lead.businessName}`,
+          `Phone: ${lead.phone || "Not provided"}`,
+          `Email: ${lead.email || "Not provided"}`,
+          `Website: ${lead.website || "Not provided"}`,
+          `Industry: ${lead.industry}`,
+          "",
+          "Biggest Problem:",
+          lead.biggestProblem,
+        ].join("\n"),
+      })
+      if (error) throw new Error(`Resend delivery failed: ${error.message}`)
+    },
+    emitAnalytics: (event, lead) => emitAuditAnalytics(event, lead, env),
+    now: () => new Date(),
+    id: () => randomUUID(),
+  }
 }
 
-function requiredFieldErrors(body: AuditRequestBody) {
-    const errors: string[] = []
+export function createAuditRequestHandler(overrides: Partial<HandlerDependencies> = {}) {
+  const dependencies = { ...defaultDependencies(), ...overrides }
 
-    if (!text(body.name)) errors.push("name is required")
-    if (!text(body.businessName)) errors.push("businessName is required")
-    if (!text(body.industry)) errors.push("industry is required")
-    if (!text(body.biggestProblem)) errors.push("biggestProblem is required")
-    if (!text(body.email) && !text(body.phone)) errors.push("either email or phone is required")
+  async function emitAnalyticsSafely(event: "audit_request_successful" | "audit_request_failed", lead: AuditLead) {
+    try {
+      await dependencies.emitAnalytics(event, lead)
+    } catch (error) {
+      console.error("audit analytics emission failed", { event, leadId: lead.id, error })
+    }
+  }
 
-    return errors
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+  return async function handler(req: VercelRequest, res: VercelResponse) {
+    res.setHeader("Cache-Control", "no-store")
     if (req.method !== "POST") {
-        res.setHeader("Allow", "POST")
-        return res.status(405).json({ error: "Method not allowed" })
+      res.setHeader("Allow", "POST")
+      return res.status(405).json({ error: "Method not allowed" })
     }
 
     const body = (req.body ?? {}) as AuditRequestBody
+    const { normalized, errors } = validateAuditRequest(body)
+    if (normalized.companyWebsite) return res.status(200).json({ ok: true })
+    if (errors.length) return res.status(400).json({ error: "Invalid audit request", errors })
 
-    if (text(body.companyWebsite)) {
-        return res.status(200).json({ ok: true })
+    const lead: AuditLead = {
+      id: normalized.requestId || dependencies.id(),
+      receivedAt: dependencies.now().toISOString(),
+      name: normalized.name,
+      businessName: normalized.businessName,
+      phone: normalized.phone || null,
+      email: normalized.email || null,
+      website: normalized.website || null,
+      industry: normalized.industry,
+      biggestProblem: normalized.biggestProblem,
+      source: "website",
+      status: "new",
     }
 
-    const errors = requiredFieldErrors(body)
-    if (errors.length > 0) {
-        return res.status(400).json({ error: "Invalid audit request", errors })
+    let referenceId: string
+    try {
+      ;({ referenceId } = await dependencies.leadStore.persist(lead))
+    } catch (error) {
+      console.error("audit lead persistence failed", { leadId: lead.id, error })
+      await emitAnalyticsSafely("audit_request_failed", lead)
+      return res.status(503).json({ error: "Audit request storage is temporarily unavailable", requestId: lead.id })
     }
 
-    const apiKey = process.env.RESEND_API_KEY
-    const toEmail = process.env.AUDIT_TO_EMAIL
-    const fromEmail = process.env.AUDIT_FROM_EMAIL
-
-    if (!apiKey || !toEmail || !fromEmail) {
-        return res.status(500).json({ error: "Email delivery is not configured" })
+    try {
+      await dependencies.sendNotification(lead)
+    } catch (error) {
+      console.error("audit Resend notification failed", { leadId: lead.id, referenceId, error })
+      await emitAnalyticsSafely("audit_request_failed", lead)
+      return res.status(502).json({
+        error: "Your request was saved, but inbox notification failed",
+        saved: true,
+        requestId: lead.id,
+        referenceId,
+      })
     }
 
-    const name = text(body.name)
-    const businessName = text(body.businessName)
-    const phone = text(body.phone) || "Not provided"
-    const email = text(body.email) || "Not provided"
-    const website = text(body.website) || "Not provided"
-    const industry = text(body.industry)
-    const biggestProblem = text(body.biggestProblem)
-
-    const resend = new Resend(apiKey)
-
-    const { error } = await resend.emails.send({
-        from: fromEmail,
-        to: [toEmail],
-        subject: `Free Visibility Audit Request: ${businessName}`,
-        replyTo: text(body.email) || undefined,
-        text: [
-            "New Free Visibility Audit request",
-            "",
-            `Name: ${name}`,
-            `Business Name: ${businessName}`,
-            `Phone: ${phone}`,
-            `Email: ${email}`,
-            `Website: ${website}`,
-            `Industry: ${industry}`,
-            "",
-            "Biggest Problem:",
-            biggestProblem,
-        ].join("\n"),
-    })
-
-    if (error) {
-        return res.status(502).json({ error: "Email delivery failed" })
-    }
-
-    return res.status(200).json({ ok: true })
+    await emitAnalyticsSafely("audit_request_successful", lead)
+    return res.status(201).json({ ok: true, requestId: lead.id, referenceId })
+  }
 }
+
+export default createAuditRequestHandler()

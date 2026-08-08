@@ -1,5 +1,6 @@
-import { FormEvent, useMemo, useState } from "react"
+import { FormEvent, useMemo, useRef, useState } from "react"
 import { WebAuthorityRoute } from "./WebAuthority"
+import { trackConversion } from "./analytics"
 
 type IntegrationMode = "LIVE" | "SANDBOX" | "MOCK" | "DISABLED" | "NOT_CONFIGURED"
 
@@ -12,7 +13,8 @@ type AuditResponse = {
 }
 
 const portalUrl = import.meta.env.VITE_PORTAL_URL || "https://dashboard-two-beige-24.vercel.app"
-const calendlyUrl = import.meta.env.VITE_CALENDLY_URL || ""
+const cal15Url = "https://cal.com/main-street-media-co-jfgesg/15min"
+const cal30Url = "https://cal.com/main-street-media-co-jfgesg/30min"
 
 const stages = [
   {
@@ -191,25 +193,35 @@ function Comparison() {
 function AuditPage() {
   const [status, setStatus] = useState<AuditResponse | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const auditStarted = useRef(false)
+
+  function markAuditStarted() {
+    if (auditStarted.current) return
+    auditStarted.current = true
+    trackConversion("audit_request_started")
+  }
 
   async function submitAudit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    trackConversion("audit_request_submitted")
     setSubmitting(true)
     setStatus(null)
 
     const form = new FormData(event.currentTarget)
-    const payload = Object.fromEntries(form.entries())
+    const payload = { ...Object.fromEntries(form.entries()), requestId: crypto.randomUUID() }
 
     try {
-      const response = await fetch("/api/lead-audit", {
+      const response = await fetch("/api/audit-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
       const data = (await response.json()) as AuditResponse
       setStatus(data)
+      trackConversion(response.ok ? "audit_request_successful" : "audit_request_failed", { status: response.status })
     } catch {
       setStatus({ ok: false, mode: "DISABLED", message: "Network dispatch failed before the request reached the server." })
+      trackConversion("audit_request_failed", { reason: "network_error" })
     } finally {
       setSubmitting(false)
     }
@@ -229,7 +241,7 @@ function AuditPage() {
             without external delivery.
           </div>
         </section>
-        <form className="audit-form" onSubmit={submitAudit}>
+        <form className="audit-form" onSubmit={submitAudit} onFocus={markAuditStarted}>
           {[
             ["businessName", "Business Name"],
             ["category", "Category"],
@@ -345,8 +357,9 @@ function ContactPage() {
           <h1>Strategy Call Scheduling</h1>
           <p className="lede">Use scheduling when configured, or route through the audit intake fallback.</p>
           <div className="actions">
-            {calendlyUrl ? <a className="button primary" href={calendlyUrl}>Schedule Strategy Call</a> : <a className="button primary" href="/audit">Request Audit</a>}
-            <a className="button ghost" href="mailto:hello@mainstreetmediaco.com">Email Directly</a>
+            <a className="button primary" href={cal15Url}>Book 15 Minutes</a>
+            <a className="button primary" href={cal30Url}>Book 30 Minutes</a>
+            <a className="button ghost" href="mailto:mainstreetmediatn@gmail.com">Email Directly</a>
           </div>
         </section>
       </main>
