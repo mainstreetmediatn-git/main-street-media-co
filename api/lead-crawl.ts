@@ -484,7 +484,7 @@ function isGoogleAppsScriptExecUrl(value: string) {
     }
 }
 
-async function deliverPackage(result: PhaseTwoResponse, sourceUrl: string) {
+async function deliverPackage(result: PhaseTwoResponse, sourceUrl: string): Promise<DeliveryResult> {
     const configuredTargets: string[] = []
     const deliveredTargets: string[] = []
     const failedTargets: string[] = []

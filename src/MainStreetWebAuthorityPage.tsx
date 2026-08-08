@@ -1,6 +1,7 @@
 import * as React from "react"
 import { useState } from "react"
 import { webAuthorityArticles } from "./data/webAuthorityArticles"
+import { trackConversion } from "./analytics"
 
 type AuditFormState = {
     name: string
@@ -31,7 +32,8 @@ const initialForm: AuditFormState = {
 
 type SubmissionStatus = "idle" | "submitting" | "sent" | "fallback"
 
-const calendlyHref = "https://calendly.com/mainstreetmediatn/30min"
+const cal15Href = "https://cal.com/main-street-media-co-jfgesg/15min"
+const cal30Href = "https://cal.com/main-street-media-co-jfgesg/30min"
 
 const services: Card[] = [
     {
@@ -49,25 +51,6 @@ const services: Card[] = [
     {
         title: "Authority Content",
         body: "Educational content that supports service depth, local relevance, and future ranking opportunities without empty keyword stuffing.",
-    },
-]
-
-const painPoints: Card[] = [
-    {
-        title: "Weak Service Pages",
-        body: "Core services are not clearly explained in the language customers use to search.",
-    },
-    {
-        title: "Missing Local Signals",
-        body: "Google and customers do not see enough relevance for your city, service area, and specialty.",
-    },
-    {
-        title: "No Trust Architecture",
-        body: "Reviews, proof, process, licensing, and credibility cues are not doing enough work.",
-    },
-    {
-        title: "Poor Conversion Flow",
-        body: "Visitors have to work too hard to call, ask for a quote, or choose the next step.",
     },
 ]
 
@@ -154,6 +137,7 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
     const [form, setForm] = useState<AuditFormState>(initialForm)
     const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus>("idle")
     const [contactError, setContactError] = useState("")
+    const auditStarted = React.useRef(false)
 
     React.useEffect(() => {
         const title = "Main Street Media Co. | Booked-Call Engine for Local Service Businesses"
@@ -184,10 +168,12 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
 
     async function submitAuditRequest(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
+        trackConversion("audit_request_submitted")
 
         if (!form.phone.trim() && !form.email.trim()) {
             setContactError("Please enter either an email address or phone number so we can follow up.")
             setSubmissionStatus("idle")
+            trackConversion("audit_request_failed", { reason: "missing_contact" })
             return
         }
 
@@ -200,13 +186,21 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(form),
+                body: JSON.stringify({ ...form, requestId: crypto.randomUUID() }),
             })
 
             setSubmissionStatus(response.ok ? "sent" : "fallback")
+            trackConversion(response.ok ? "audit_request_successful" : "audit_request_failed", { status: response.status })
         } catch {
             setSubmissionStatus("fallback")
+            trackConversion("audit_request_failed", { reason: "network_error" })
         }
+    }
+
+    function markAuditStarted() {
+        if (auditStarted.current) return
+        auditStarted.current = true
+        trackConversion("audit_request_started")
     }
 
     return (
@@ -240,7 +234,7 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                         <a className="msm-button msm-button-primary" href="#audit-form">Request Free Visibility Audit</a>
                     </div>
                     <p className="msm-secondary-cta">
-                        Prefer to talk first? <a href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>.
+                        Prefer to talk first? <a href={cal15Href} target="_blank" rel="noreferrer">Book a 15-minute call</a> or <a href={cal30Href} target="_blank" rel="noreferrer">book a 30-minute audit call</a>.
                     </p>
                     <div className="msm-stat-strip" aria-label="Core outcomes">
                         <span>Local SEO</span>
@@ -388,13 +382,13 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                     </div>
                 </div>
 
-                <form className="msm-form" onSubmit={submitAuditRequest}>
+                <form className="msm-form" onSubmit={submitAuditRequest} onFocus={markAuditStarted}>
                     {submissionStatus === "sent" && (
                         <div className="msm-form-success msm-full" role="status" aria-live="polite">
                             <strong>Audit request sent.</strong>
                             <p>
                                 Your audit request has been sent. Main Street Media Co. will review it and follow up soon with a concise readout and next steps. You can also{" "}
-                                <a href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>.
+                                <a href={cal30Href} target="_blank" rel="noreferrer">Book a 30-minute audit call</a>.
                             </p>
                         </div>
                     )}
@@ -403,7 +397,7 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                             <strong>Audit request prepared.</strong>
                             <p>
                                 Your audit request has been prepared. Until automated delivery is connected, please email mainstreetmediatn@gmail.com or call 949-447-4490. Or book directly here:{" "}
-                                <a href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
+                                <a href={cal30Href} target="_blank" rel="noreferrer">Book a 30-minute audit call</a>
                             </p>
                         </div>
                     )}
@@ -461,7 +455,8 @@ export default function MainStreetWebAuthorityPage(props: { style?: React.CSSPro
                 </div>
                 <div className="msm-footer-actions">
                     <a className="msm-button msm-button-secondary" href="#audit-form">Request Free Visibility Audit</a>
-                    <a className="msm-button msm-button-secondary" href={calendlyHref} target="_blank" rel="noreferrer">Book Free Audit Call</a>
+                    <a className="msm-button msm-button-secondary" href={cal15Href} target="_blank" rel="noreferrer">Book 15 Minutes</a>
+                    <a className="msm-button msm-button-secondary" href={cal30Href} target="_blank" rel="noreferrer">Book 30 Minutes</a>
                 </div>
             </footer>
         </main>

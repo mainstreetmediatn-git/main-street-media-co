@@ -48,6 +48,10 @@ function doPost(e) {
       });
     }
 
+    if (payload.type === "audit_request") {
+      return persistAuditRequest(root, rootName, payload);
+    }
+
     const bundle = requireObject(payload.auditBundle, "auditBundle");
     const source = requireObject(bundle.source, "auditBundle.source");
     const businessName = cleanName(source.businessName || source.inputUrl || "Unknown Business");
@@ -142,6 +146,43 @@ function doPost(e) {
       message: String(error && error.message ? error.message : error)
     }, 500);
   }
+}
+
+function persistAuditRequest(root, rootName, payload) {
+  const lead = requireObject(payload.lead, "lead");
+  const leadId = cleanName(lead.id || "missing-id");
+  const businessName = cleanName(lead.businessName || "Unknown Business");
+  const leadFolder = findOrCreateFolder(root, businessName + " - Audit Lead");
+  const intakeName = "intake-" + leadId + ".json";
+  const existing = findFile(leadFolder, intakeName);
+  const record = {
+    leadId: leadId,
+    businessName: businessName,
+    contactName: String(lead.name || ""),
+    email: String(lead.email || ""),
+    phone: String(lead.phone || ""),
+    website: String(lead.website || ""),
+    industry: String(lead.industry || ""),
+    biggestProblem: String(lead.biggestProblem || ""),
+    source: String(lead.source || "website"),
+    status: String(lead.status || "new"),
+    receivedAt: String(lead.receivedAt || new Date().toISOString()),
+    updatedAt: new Date().toISOString(),
+    googleDriveFolderUrl: leadFolder.getUrl()
+  };
+
+  const intakeFile = upsertTextFile(leadFolder, intakeName, JSON.stringify(record, null, 2), MimeType.PLAIN_TEXT);
+  upsertTextFile(leadFolder, "crm-record.json", JSON.stringify(record, null, 2), MimeType.PLAIN_TEXT);
+
+  return jsonResponse({
+    ok: true,
+    id: leadId,
+    referenceId: leadId,
+    duplicatePrevented: Boolean(existing),
+    rootName: rootName,
+    leadFolderUrl: leadFolder.getUrl(),
+    intakeFileUrl: intakeFile.getUrl()
+  });
 }
 
 function ensureStandardFolders(leadFolder) {

@@ -2,6 +2,8 @@
 
 The lead crawler can deliver generated audit packages to the CRM Google Drive through a deployed Google Apps Script web app. This keeps Google Drive permissions inside the Google account that owns the CRM Drive folder and avoids storing Google service-account credentials in the website function.
 
+The same bridge also accepts the production visibility-audit intake envelope and persists it before Resend notification. Audit intake uses `AUDIT_LEAD_STORE_URL` and `AUDIT_LEAD_STORE_SECRET`; these may point to the same deployed `/exec` URL and shared secret used by the crawler.
+
 The production Apps Script source lives at:
 
 ```text
@@ -17,6 +19,8 @@ Use the existing server-side variable names already expected by `api/lead-crawl.
 | `GOOGLE_APPS_SCRIPT_WEB_APP_URL` | Vercel env `LEAD_CRAWL_GOOGLE_DRIVE_WEBHOOK_URL` | Must be a deployed Apps Script Web App URL ending in `/exec`. Do not use `/dev`. |
 | `CRM_GOOGLE_DRIVE_FOLDER_ID` | Apps Script script property `CRM_GOOGLE_DRIVE_FOLDER_ID` | Keep this inside Apps Script, not in client-side Vite variables. |
 | shared secret | Vercel env and Apps Script script property `LEAD_CRAWL_GOOGLE_DRIVE_WEBHOOK_SECRET` | The values must match. |
+| audit intake URL | Vercel env `AUDIT_LEAD_STORE_URL` | Use the same deployed `/exec` URL when Google Drive is the durable lead store. |
+| audit intake secret | Vercel env `AUDIT_LEAD_STORE_SECRET` | Must match the Apps Script shared secret. |
 
 Do not prefix these values with `VITE_`, `NEXT_PUBLIC_`, or any other client-exposed prefix.
 
@@ -77,6 +81,8 @@ Set only server-side environment variables:
 ```bash
 vercel env add LEAD_CRAWL_GOOGLE_DRIVE_WEBHOOK_URL production
 vercel env add LEAD_CRAWL_GOOGLE_DRIVE_WEBHOOK_SECRET production
+vercel env add AUDIT_LEAD_STORE_URL production
+vercel env add AUDIT_LEAD_STORE_SECRET production
 ```
 
 Preview and development should only receive these values when you intend those environments to write to the CRM Drive. For safer testing, use a separate sandbox CRM Drive folder and a separate Apps Script deployment.
@@ -105,6 +111,8 @@ The Apps Script bridge:
 - Writes `run-{runId}.json` in `01 Research`.
 - Returns the lead folder URL, CRM record URL, saved file URLs, and duplicate-prevention status.
 
+For `type: "audit_request"`, the bridge creates or reuses `{Business Name} - Audit Lead`, writes an immutable-id intake file plus `crm-record.json`, and returns the durable reference ID. Repeated requests with the same lead ID update rather than duplicate the files.
+
 ## Duplicate prevention
 
 The bridge is idempotent at two levels:
@@ -113,4 +121,3 @@ The bridge is idempotent at two levels:
 - Existing files are updated by exact file name instead of duplicated.
 
 If the same `runId` is received again, the response returns `duplicatePrevented: true` and updates the existing lead package files rather than creating duplicates.
-
