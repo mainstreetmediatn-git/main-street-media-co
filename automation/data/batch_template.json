@@ -1,0 +1,38 @@
+{
+  "batch_id": "example-only",
+  "timezone": "America/Chicago",
+  "records": [
+    {
+      "name": "Example Business",
+      "industry": "Home service",
+      "location": "Memphis, TN",
+      "website": "https://example.invalid",
+      "phone": null,
+      "email": null,
+      "email_source": null,
+      "contact_name": null,
+      "contact_role": null,
+      "source_urls": [
+        "https://example.invalid"
+      ],
+      "observation": "Replace with a verified public observation.",
+      "evidence": "Replace with a short source excerpt.",
+      "improvements": [
+        "Actionable improvement 1",
+        "Actionable improvement 2",
+        "Actionable improvement 3"
+      ],
+      "what_if": "Describe a plausible improved customer experience without guarantees.",
+      "score": 1,
+      "score_reasons": [
+        "Geography",
+        "Industry",
+        "Observed need",
+        "Verified contact route",
+        "Service fit"
+      ],
+      "recommended_service": "Approved service",
+      "next_action": "Review record"
+    }
+  ]
+}
