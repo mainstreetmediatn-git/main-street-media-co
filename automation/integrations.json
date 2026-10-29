@@ -1,0 +1,144 @@
+{
+  "updated_at": "2026-10-29",
+  "policy": "Connected integrations are optional adapters. SQLite remains authoritative until a hosted CRM/database is explicitly selected and verified.",
+  "integrations": [
+    {
+      "name": "Gmail",
+      "status": "CONNECTED_VERIFIED",
+      "role": [
+        "drafts",
+        "threads",
+        "sent reconciliation",
+        "reply processing"
+      ],
+      "account": "Main Street Media Co. Gmail",
+      "write_policy": "draft-only; provider send disabled"
+    },
+    {
+      "name": "Google Drive/Sheets",
+      "status": "CONNECTED_VERIFIED",
+      "role": [
+        "legacy CRM recovery",
+        "source records",
+        "deliverable storage/readback"
+      ],
+      "account": "Main Street Media Co. Drive",
+      "write_policy": "read-only recovery in this run"
+    },
+    {
+      "name": "GitHub",
+      "status": "CONNECTED_VERIFIED",
+      "role": [
+        "source recovery",
+        "version reference"
+      ],
+      "repository": "mainstreetmediatn-git/main-street-media-co",
+      "write_policy": "no remote writes"
+    },
+    {
+      "name": "TinyFish",
+      "status": "CONNECTED_VERIFIED",
+      "role": [
+        "public-web search",
+        "targeted page fetch/browser tasks"
+      ],
+      "write_policy": "read-only research; no form submissions"
+    },
+    {
+      "name": "Hunter",
+      "status": "CONNECTED_READ_ONLY",
+      "role": [
+        "optional domain enrichment",
+        "contact verification if already available"
+      ],
+      "write_policy": "no lead writes/sequences; no new-person-email guessing; no sending inbox connected"
+    },
+    {
+      "name": "Calendly",
+      "status": "CONNECTED_VERIFIED_TIMEZONE_REVIEW",
+      "role": [
+        "booking verification",
+        "meeting state"
+      ],
+      "event_type": "Free Visibility Audit Call (30 minutes)",
+      "scheduling_url": "https://calendly.com/mainstreetmediaco/30min",
+      "connected_timezone": "America/New_York",
+      "business_timezone": "America/Chicago",
+      "write_policy": "read-only until timezone/booking policy is confirmed"
+    },
+    {
+      "name": "Slack",
+      "status": "CONNECTED_VERIFIED",
+      "role": [
+        "optional alert destination",
+        "historical context"
+      ],
+      "write_policy": "no messages sent in this run"
+    },
+    {
+      "name": "Asana",
+      "status": "AUTHENTICATED_NO_WORKSPACE_RETURNED",
+      "role": [
+        "optional task handoff"
+      ],
+      "write_policy": "no tasks created in this run"
+    },
+    {
+      "name": "HubSpot",
+      "status": "CONNECTED_WRONG_PORTAL_READ_ONLY",
+      "role": [
+        "not authoritative; possible future migration"
+      ],
+      "account": "portal identity did not match Main Street Media Co.; write permissions require reauthorization",
+      "write_policy": "no writes"
+    },
+    {
+      "name": "Supabase",
+      "status": "INACTIVE_UNAVAILABLE",
+      "role": [
+        "possible future hosted database"
+      ],
+      "project": "mainstreetmediatn-git's Project",
+      "write_policy": "not used; project inactive/database unavailable"
+    },
+    {
+      "name": "Firecrawl",
+      "status": "AVAILABLE_NOT_INSTALLED",
+      "role": [
+        "optional crawl/structured extraction/change monitoring"
+      ],
+      "write_policy": "install/connect before use"
+    },
+    {
+      "name": "Crawl4AI",
+      "status": "NOT_AVAILABLE",
+      "role": [
+        "optional local crawler"
+      ],
+      "write_policy": "not connected; not required for current batch"
+    },
+    {
+      "name": "Google Calendar",
+      "status": "CONNECTED_WRONG_IDENTITY",
+      "role": [
+        "possible future discovery booking sync"
+      ],
+      "write_policy": "not used; connected profile appeared personal rather than MSM"
+    },
+    {
+      "name": "Salesforce",
+      "status": "DISABLED_BY_ADMIN",
+      "role": [],
+      "write_policy": "unavailable"
+    },
+    {
+      "name": "Apollo/Clay/Attio/Close/Zoho/ZoomInfo/Datadog",
+      "status": "AVAILABLE_NOT_INSTALLED",
+      "role": [
+        "future optional enrichment/observability"
+      ],
+      "write_policy": "no account connected; not used"
+    }
+  ]
+}
+
