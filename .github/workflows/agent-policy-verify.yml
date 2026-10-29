@@ -1,0 +1,26 @@
+name: Agent policy verification
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - codex/main-street-automation
+
+jobs:
+  agent-policy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: automation
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile agent layer
+        run: python -m py_compile agent_system.py
+      - name: Run deterministic agent policy tests
+        run: python agent_system.py self-test
