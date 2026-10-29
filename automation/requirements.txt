@@ -1,0 +1,4 @@
+# No third-party packages are required for the SQLite/draft-only core.
+# Optional provider connectors are authenticated through the Codex-connected apps,
+# not through credentials stored in this environment.
+
