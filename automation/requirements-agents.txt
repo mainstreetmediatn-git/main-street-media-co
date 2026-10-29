@@ -1,0 +1,3 @@
+# Live agent runtime. Keep this separate from the stdlib-only CRM core.
+openai-agents
+
